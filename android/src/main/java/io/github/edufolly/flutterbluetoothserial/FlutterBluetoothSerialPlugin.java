@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -69,10 +70,10 @@ public class FlutterBluetoothSerialPlugin implements FlutterPlugin, ActivityAwar
     private final BroadcastReceiver discoveryReceiver;
 
     // Connections
-    /// Contains all active connections. Maps ID of the connection with plugin data channels. 
+    /// Contains all active connections. Maps ID of the connection with plugin data channels.
     private final SparseArray<BluetoothConnectionWrapper> connections = new SparseArray<>(2);
 
-    /// Last ID given to any connection, used to avoid duplicate IDs 
+    /// Last ID given to any connection, used to avoid duplicate IDs
     private int lastConnectionId = 0;
     private Activity activity;
     private BinaryMessenger messenger;
@@ -268,7 +269,7 @@ public class FlutterBluetoothSerialPlugin implements FlutterPlugin, ActivityAwar
                 switch (action) {
                     case BluetoothDevice.ACTION_FOUND:
                         final BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                        //final BluetoothClass deviceClass = intent.getParcelableExtra(BluetoothDevice.EXTRA_CLASS); // @TODO . !BluetoothClass!
+                        final BluetoothClass deviceClass = intent.getParcelableExtra(BluetoothDevice.EXTRA_CLASS); // @TODO . !BluetoothClass!
                         //final String extraName = intent.getStringExtra(BluetoothDevice.EXTRA_NAME); // @TODO ? !EXTRA_NAME!
                         final int deviceRSSI = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE);
 
@@ -276,12 +277,17 @@ public class FlutterBluetoothSerialPlugin implements FlutterPlugin, ActivityAwar
                         discoveryResult.put("address", device.getAddress());
                         discoveryResult.put("name", device.getName());
                         discoveryResult.put("type", device.getType());
-                        //discoveryResult.put("class", deviceClass); // @TODO . it isn't my priority for now !BluetoothClass!
+                        discoveryResult.put("device_class", deviceClass.getDeviceClass()); // @TODO . it isn't my priority for now !BluetoothClass!
+                        discoveryResult.put("device_major_class", deviceClass.getMajorDeviceClass()); // @TODO . it isn't my priority for now !BluetoothClass!
                         discoveryResult.put("isConnected", checkIsDeviceConnected(device));
                         discoveryResult.put("bondState", device.getBondState());
                         discoveryResult.put("rssi", deviceRSSI);
 
                         Log.d(TAG, "Discovered " + device.getAddress());
+                        Log.d(TAG, "Name " + device.getName());
+                        Log.d(TAG, "Device Class " + deviceClass.getDeviceClass());
+                        Log.d(TAG, "Device Major Class " + deviceClass.getMajorDeviceClass());
+
                         if (discoverySink != null) {
                             discoverySink.success(discoveryResult);
                         }
@@ -893,25 +899,20 @@ public class FlutterBluetoothSerialPlugin implements FlutterPlugin, ActivityAwar
                     break;
 
                 case "getBondedDevices":
-                    ensurePermissions(granted -> {
-                        if (!granted) {
-                            result.error("no_permissions", "discovering other devices requires location access permission", null);
-                            return;
-                        }
-
-                        List<Map<String, Object>> list = new ArrayList<>();
-                        for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
-                            Map<String, Object> entry = new HashMap<>();
-                            entry.put("address", device.getAddress());
-                            entry.put("name", device.getName());
-                            entry.put("type", device.getType());
-                            entry.put("isConnected", checkIsDeviceConnected(device));
-                            entry.put("bondState", BluetoothDevice.BOND_BONDED);
-                            list.add(entry);
-                        }
-
-                        result.success(list);
-                    });
+                    List<Map<String, Object>> list = new ArrayList<>();
+                    for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
+                        final BluetoothClass deviceClass = device.getBluetoothClass();
+                        Map<String, Object> entry = new HashMap<>();
+                        entry.put("address", device.getAddress());
+                        entry.put("name", device.getName());
+                        entry.put("type", device.getType());
+                        entry.put("device_class", deviceClass.getDeviceClass()); // @TODO . it isn't my priority for now !BluetoothClass!
+                        entry.put("device_major_class", deviceClass.getMajorDeviceClass()); // @TODO . it isn't my priority for now !BluetoothClass!
+                        entry.put("isConnected", checkIsDeviceConnected(device));
+                        entry.put("bondState", BluetoothDevice.BOND_BONDED);
+                        list.add(entry);
+                    }
+                    result.success(list);
                     break;
 
                 case "isDiscovering":
