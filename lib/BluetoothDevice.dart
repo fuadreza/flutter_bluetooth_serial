@@ -12,7 +12,10 @@ class BluetoothDevice {
   final BluetoothDeviceType type;
 
   /// Class of the device.
-  //final BluetoothClass bluetoothClass // @TODO . !BluetoothClass!
+  final int deviceClass;
+
+  /// Class of the device.
+  final int deviceMajorClass;
 
   /// Describes is device connected.
   final bool isConnected;
@@ -32,6 +35,8 @@ class BluetoothDevice {
     this.name,
     required this.address,
     this.type = BluetoothDeviceType.unknown,
+    this.deviceClass = 0,
+    this.deviceMajorClass =0,
     this.isConnected = false,
     this.bondState = BluetoothBondState.unknown,
   });
@@ -42,25 +47,25 @@ class BluetoothDevice {
   factory BluetoothDevice.fromMap(Map map) {
     return BluetoothDevice(
       name: map["name"],
-      address: map["address"]!,
-      type: map["type"] != null
-          ? BluetoothDeviceType.fromUnderlyingValue(map["type"])
-          : BluetoothDeviceType.unknown,
+      address: map["address"]! ?? 0,
+      deviceClass: map["device_class"] != null ? map["device_class"] : 0,
+      deviceMajorClass: map["device_major_class"] != null ? map["device_major_class"] : 0,
+      type: map["type"] != null ? BluetoothDeviceType.fromUnderlyingValue(map["type"]) : BluetoothDeviceType.unknown,
       isConnected: map["isConnected"] ?? false,
-      bondState: map["bondState"] != null
-          ? BluetoothBondState.fromUnderlyingValue(map["bondState"])
-          : BluetoothBondState.unknown,
+      bondState: map["bondState"] != null ? BluetoothBondState.fromUnderlyingValue(map["bondState"]) : BluetoothBondState.unknown,
     );
   }
 
   /// Creates map from `BluetoothDevice`.
   Map<String, dynamic> toMap() => {
-        "name": this.name,
-        "address": this.address,
-        "type": this.type.toUnderlyingValue(),
-        "isConnected": this.isConnected,
-        "bondState": this.bondState.toUnderlyingValue(),
-      };
+    "name": this.name,
+    "address": this.address,
+    "device_class": this.deviceClass,
+    "device_major_class": this.deviceMajorClass,
+    "type": this.type.toUnderlyingValue(),
+    "isConnected": this.isConnected,
+    "bondState": this.bondState.toUnderlyingValue(),
+  };
 
   /// Compares for equality of this and other `BluetoothDevice`.
   ///
