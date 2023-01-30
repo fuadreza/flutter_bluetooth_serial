@@ -1,7 +1,5 @@
-package android
-
 group 'io.github.edufolly.flutterbluetoothserial'
-version '1.0-SNAPSHOT'
+
 buildscript {
     repositories {
         google()
